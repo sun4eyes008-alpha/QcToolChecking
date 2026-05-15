@@ -337,7 +337,7 @@ var QC_SCORECARDS = {
   CHAT:   { label: 'CHAT',           criteria: _CHAT_CRITERIA,   wowFactors: _CHAT_WOW,   autofailFactors: _CHAT_AUTOFAIL,   errorCodes: _CHAT_ERROR_CODES },
   ECOM:   { label: 'EMAIL',         criteria: _ECOM_CRITERIA,   wowFactors: _ECOM_WOW,   autofailFactors: _ECOM_AUTOFAIL,   errorCodes: _ECOM_ERROR_CODES },
   F2F:    { label: 'F2F',            criteria: _F2F_CRITERIA,    wowFactors: _F2F_WOW,    autofailFactors: _F2F_AUTOFAIL,    errorCodes: _VOICE_ERROR_CODES },
-  F2FOB:  { label: 'F2F+OB',        criteria: _F2FOB_CRITERIA,  wowFactors: _F2FOB_WOW,  autofailFactors: _F2FOB_AUTOFAIL,  errorCodes: _VOICE_ERROR_CODES },
+  F2FOB:  { label: 'F2FOB',        criteria: _F2FOB_CRITERIA,  wowFactors: _F2FOB_WOW,  autofailFactors: _F2FOB_AUTOFAIL,  errorCodes: _VOICE_ERROR_CODES },
   OB:     { label: 'OB - Outbound',  criteria: _OB_CRITERIA,     wowFactors: _OB_WOW,     autofailFactors: _OB_AUTOFAIL,     errorCodes: _VOICE_ERROR_CODES },
   SP:   { label: 'SP',             criteria: _SP_CRITERIA,   wowFactors: _SP_WOW,   autofailFactors: _SP_AUTOFAIL,   errorCodes: _VOICE_ERROR_CODES },
 };
@@ -2681,13 +2681,13 @@ function renderScoringForm(record) {
 
   var infoEl = document.getElementById('qcCallInfo');
   if (infoEl) {
-    var acc = String(record['ACCOUNTNUMBER'] || '').trim();
-    var accShort = acc ? (acc.length > 2 ? ('ACC') : acc) : '—';
+    var acc = String(record['ACCOUNTNUMBER'] || '—').trim();
+    var accShort = acc ? (acc.length > 16 ? acc.substring(0, 16) + '...' : acc) : '—';
     var topMetaHtml = 
       '<span class="call-meta-item">' + QC_ICONS.user + ' ' + (record['USER'] || '—') + '</span>' +
       '<span class="call-meta-item">' + QC_ICONS.building + ' ' + (record['Team'] || '—') + '</span>' +
       (acc
-        ? '<span class="call-meta-item interaction-chip" id="qcCopyAcc" title="Click để copy số tài khoản" Style="width:38px">' + accShort + '</span>'
+        ? '<span class="call-meta-item interaction-chip" id="qcCopyAcc" title="Click để copy số tài khoản" Style="width:100px">' + accShort + '</span>'
         : '<span class="call-meta-item">—</span>');
     
     var bottomMetaHtml = 
@@ -3754,7 +3754,7 @@ function buildQcPanelHtml() {
     '<button class="qc-group-btn" data-group="CHAT">CHAT</button>' +
     '<button class="qc-group-btn" data-group="ECOM">EMAIL</button>' +
     '<button class="qc-group-btn" data-group="F2F">F2F</button>' +
-    '<button class="qc-group-btn" data-group="F2FOB">F2F+OB</button>' +
+    '<button class="qc-group-btn" data-group="F2FOB">F2FOB</button>' +
     '<button class="qc-group-btn" data-group="OB">OB</button>' +
     '<button class="qc-group-btn" data-group="SP">SP</button>' +
     '</div>' +
