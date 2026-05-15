@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QC Tool – Chấm call</title>
+  <meta name="description" content="Công cụ chấm điểm cuộc gọi QC: Import SPIN, nhận/trả call, chấm điểm, xuất file Excel." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700;800&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="qc_panel.css" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --web-bg-from: #0a1628;
+      --web-bg-to:   #0f2a18;
+    }
+
+    html, body {
+      height: 100%;
+      font-family: 'Be Vietnam Pro', 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      background: #f0f4f2;
+      overflow: hidden;
+      position: relative;
+    }
+
+
+
+    /* ── Topbar ── */
+    .web-topbar {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      padding: 0 28px;
+      height: 56px;
+      background: linear-gradient(135deg, #0d3821 0%, #1d5f46 60%, #2e7a5a 100%);
+      box-shadow: 0 2px 16px rgba(0,0,0,0.18);
+      flex-shrink: 0;
+      z-index: 10;
+    }
+
+    /* Main layout */
+    .web-layout {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+      padding: 18px 24px 14px;
+      max-width: 1280px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .web-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-right: 32px;
+    }
+
+    .web-brand-orb {
+      width: 32px; height: 32px;
+      border-radius: 9px;
+      background: linear-gradient(135deg, #00d168, #00a152);
+      box-shadow: 0 4px 12px rgba(0,209,104,0.35);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .web-brand-orb svg { width: 17px; height: 17px; color: #fff; }
+
+    .web-brand-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 17px; font-weight: 800;
+      color: #fff; letter-spacing: -0.01em;
+    }
+    .web-brand-sub {
+      font-size: 9px; font-weight: 600;
+      color: rgba(255,255,255,0.42);
+      letter-spacing: 0.06em; text-transform: uppercase;
+    }
+    .web-version {
+      margin-left: auto;
+      font-size: 10px; font-weight: 600;
+      color: rgba(255,255,255,0.25);
+    }
+
+    /* ── Topbar nav tabs ── */
+    .web-tab-bar {
+      display: flex;
+      gap: 2px;
+      align-items: center;
+    }
+
+    .web-tab-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 18px;
+      border: none;
+      border-radius: 8px;
+      background: transparent;
+      color: rgba(255,255,255,0.52);
+      font-family: 'Be Vietnam Pro', sans-serif;
+      font-size: 12px; font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+      white-space: nowrap;
+    }
+    .web-tab-btn:hover:not(.active) {
+      background: rgba(255,255,255,0.08);
+      color: rgba(255,255,255,0.85);
+    }
+    .web-tab-btn.active {
+      background: rgba(0,209,104,0.18);
+      color: #4fffac;
+      box-shadow: inset 0 -2px 0 #00d168;
+    }
+    .web-tab-btn svg { width: 13px; height: 13px; flex-shrink: 0; }
+
+    /* QC Panel container */
+    .web-panel {
+      flex: 1;
+      min-height: 0;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.10), 0 0 0 1px rgba(0,0,0,0.06);
+    }
+
+    #qcTab, .qc-theme-shell {
+      height: 100%;
+      border-radius: 16px;
+    }
+
+    /* Status bar */
+    .web-status-bar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 0 0;
+      font-size: 10px;
+      color: #98a8a0;
+      flex-shrink: 0;
+    }
+    .web-status-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: #00b359;
+      box-shadow: 0 0 5px rgba(0,179,89,0.5);
+      animation: dotPulse 2s ease infinite;
+    }
+    @keyframes dotPulse {
+      0%,100%{opacity:1}50%{opacity:.4}
+    }
+
+    /* ── QC Web overrides ── */
+
+    /* Ẩn tab bar nội bộ (tab-bar của buildQcPanelHtml) — dùng web-tab-bar ngoài thay thế */
+    #qcTab .tab-bar {
+      display: none !important;
+    }
+
+    /* Ẩn nút Tìm SpeechMiner (inject bar) */
+    #qcInjectBar .inject-btn,
+    button#qcInjectBtn {
+      display: none !important;
+    }
+
+    /* Kéo dãn inject-id chip để chiếm toàn bộ chỗ trống */
+    #qcInjectBar {
+      justify-content: flex-end;
+    }
+
+    /* qcTab không cần gap top vì không còn tab-bar nội bộ */
+    #qcTab, .qc-theme-shell {
+      gap: 0;
+      padding: 0;
+    }
+
+    /* Section chiếm toàn bộ chiều cao panel */
+    .qc-section.active {
+      border-radius: 20px;
+    }
+
+    /* ── Sync topbar màu với QC theme ── */
+    /* Default / forest */
+    .web-topbar {
+      background: linear-gradient(135deg, #1d5f46 0%, #4ba471 100%);
+      transition: background 0.3s ease;
+    }
+    body[data-qc-theme="forest"]   .web-topbar { background: linear-gradient(135deg, #1d5f46 0%, #4ba471 100%); }
+    body[data-qc-theme="ocean"]    .web-topbar { background: linear-gradient(135deg, #135878 0%, #31bdb7 100%); }
+    body[data-qc-theme="sunset"]   .web-topbar { background: linear-gradient(135deg, #a84f24 0%, #ffb067 100%); }
+    body[data-qc-theme="rose"]     .web-topbar { background: linear-gradient(135deg, #a63b67 0%, #f08eb0 100%); }
+    body[data-qc-theme="midnight"] .web-topbar { background: linear-gradient(135deg, #33408f 0%, #8a97ff 100%); }
+  </style>
+</head>
+
+<body>
+
+  <!-- Topbar -->
+  <header class="web-topbar">
+    <div class="web-brand">
+      <div class="web-brand-orb" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+        </svg>
+      </div>
+      <div>
+        <div class="web-brand-title">QC Tool</div>
+        <div class="web-brand-sub">Chấm điểm cuộc gọi</div>
+      </div>
+    </div>
+
+    <nav class="web-tab-bar" role="tablist" aria-label="QC sections">
+      <button class="web-tab-btn active" id="qcTabImport" role="tab" aria-selected="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+        </svg>
+        Data
+      </button>
+      <button class="web-tab-btn" id="qcTabScore" role="tab" aria-selected="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 18v-6a9 9 0 0 1 18 0v6"/>
+          <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3z"/>
+          <path d="M3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/>
+        </svg>
+        Evaluation
+      </button>
+      <button class="web-tab-btn" id="qcTabExport" role="tab" aria-selected="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+        </svg>
+        History
+      </button>
+    </nav>
+
+    <div class="web-version">v2.8</div>
+  </header>
+
+  <!-- Main content -->
+  <div class="web-layout">
+    <div class="web-panel" id="qcPanel"></div>
+    <div class="web-status-bar" aria-live="polite">
+      <span class="web-status-dot" aria-hidden="true"></span>
+      <span>Web Tool — File System Access API (Chrome / Edge)</span>
+    </div>
+  </div>
+
+  <script src="xlsx.full.min.js"></script>
+
+  <!-- ① Patch chrome.storage → localStorage TRƯỚC khi load qc_panel.js -->
+  <script>
+    window.chrome = {
+      storage: {
+        local: {
+          get: function (keys, cb) {
+            var result = {};
+            var arr = Array.isArray(keys) ? keys : (typeof keys === 'string' ? [keys] : Object.keys(keys));
+            arr.forEach(function (k) {
+              var raw = localStorage.getItem(k);
+              if (raw !== null) { try { result[k] = JSON.parse(raw); } catch (e) { result[k] = raw; } }
+            });
+            if (typeof cb === 'function') cb(result);
+          },
+          set: function (obj, cb) {
+            Object.keys(obj).forEach(function (k) {
+              try { localStorage.setItem(k, JSON.stringify(obj[k])); } catch (e) {}
+            });
+            if (typeof cb === 'function') cb();
+          }
+        }
+      },
+      runtime: { lastError: null }
+    };
+  </script>
+
+  <!-- ② Load toàn bộ logic QC (gốc) -->
+  <script src="qc_panel.js"></script>
+
+  <!-- ③ Patch lại các hàm cần override cho web -->
+  <script>
+    // Bỏ injectExternalId
+    function injectExternalId() {
+      showQcToast('Tính năng này chỉ dùng được trong Chrome Extension', 'err');
+    }
+
+    // Bootstrap
+    (function () {
+      var panel = document.getElementById('qcPanel');
+      if (panel && typeof buildQcPanelHtml === 'function') {
+        panel.innerHTML = buildQcPanelHtml();
+      }
+
+      // Sync web tab bar khi switchQcTab được gọi
+      var _origSwitch = switchQcTab;
+      switchQcTab = function (tabId) {
+        _origSwitch(tabId);
+        document.querySelectorAll('.web-tab-btn').forEach(function (b) {
+          var active = (b.id === tabId);
+          b.classList.toggle('active', active);
+          b.setAttribute('aria-selected', String(active));
+        });
+      };
+
+      // Wire tab bar buttons
+      ['qcTabImport', 'qcTabScore', 'qcTabExport'].forEach(function (id) {
+        var btn = document.getElementById(id);
+        if (btn) btn.addEventListener('click', function () { switchQcTab(id); });
+      });
+
+      // Init panel
+      if (typeof initQcPanel === 'function') {
+        initQcPanel().catch(function (e) { console.error('[QCWeb] init error:', e); });
+      }
+    })();
+  </script>
+</body>
+
+</html>

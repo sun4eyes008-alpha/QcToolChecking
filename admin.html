@@ -1,0 +1,1629 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QC Admin – Quản lý khóa</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700;800&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      font-family: 'Be Vietnam Pro', 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f0f4f2;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* ── Topbar ── */
+    .admin-topbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 28px;
+      height: 56px;
+      background: linear-gradient(135deg, #7c2d12 0%, #c2410c 60%, #ea580c 100%);
+      box-shadow: 0 2px 16px rgba(0,0,0,0.18);
+      flex-shrink: 0;
+    }
+
+    .admin-brand-orb {
+      width: 32px; height: 32px;
+      border-radius: 9px;
+      background: linear-gradient(135deg, #f97316, #ea580c);
+      box-shadow: 0 4px 12px rgba(249,115,22,0.35);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .admin-brand-orb svg { width: 17px; height: 17px; color: #fff; }
+
+    .admin-brand-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 17px; font-weight: 800;
+      color: #fff;
+    }
+    .admin-brand-sub {
+      font-size: 9px; font-weight: 600;
+      color: rgba(255,255,255,0.5);
+      letter-spacing: 0.06em; text-transform: uppercase;
+    }
+
+    .admin-back {
+      margin-left: auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 14px;
+      border: none;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.15);
+      color: #fff;
+      font-family: 'Be Vietnam Pro', sans-serif;
+      font-size: 12px; font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s;
+      text-decoration: none;
+    }
+    .admin-back:hover { background: rgba(255,255,255,0.25); }
+    .admin-back svg { width: 13px; height: 13px; }
+
+    /* ── Layout ── */
+    .admin-layout {
+      flex: 1;
+      max-width: 1280px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 20px 24px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      min-height: 0;
+    }
+
+    /* ── Toolbar ── */
+    .admin-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn-pick {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border: none;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #f97316, #ea580c);
+      color: #fff;
+      font-family: 'Be Vietnam Pro', sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: box-shadow 0.15s, transform 0.1s;
+      box-shadow: 0 2px 10px rgba(249,115,22,0.3);
+    }
+    .btn-pick:hover { box-shadow: 0 4px 16px rgba(249,115,22,0.45); transform: translateY(-1px); }
+    .btn-pick:active { transform: translateY(0); }
+    .btn-pick svg { width: 14px; height: 14px; }
+
+    .btn-pick.secondary {
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      box-shadow: 0 2px 10px rgba(37,99,235,0.3);
+    }
+    .btn-pick.secondary:hover { box-shadow: 0 4px 16px rgba(37,99,235,0.45); }
+
+    .btn-refresh {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 8px 14px;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      background: #fff;
+      color: #475569;
+      font-family: 'Be Vietnam Pro', sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .btn-refresh:hover { background: #f8fafc; border-color: #cbd5e1; }
+    .btn-refresh svg { width: 13px; height: 13px; }
+
+    .file-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #94a3b8;
+      padding: 4px 10px;
+      background: #f1f5f9;
+      border-radius: 6px;
+      max-width: 220px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .file-label.active { color: #059669; background: #ecfdf5; }
+
+    /* ── Search ── */
+    .admin-search-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .search-box {
+      flex: 1;
+      max-width: 420px;
+      position: relative;
+    }
+    .search-box input {
+      width: 100%;
+      padding: 8px 12px 8px 34px;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      background: #fff;
+      font-family: 'Be Vietnam Pro', sans-serif;
+      font-size: 12px;
+      color: #1e293b;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .search-box input:focus {
+      border-color: #f97316;
+      box-shadow: 0 0 0 3px rgba(249,115,22,0.12);
+    }
+    .search-box input::placeholder { color: #94a3b8; }
+    .search-box svg {
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 14px; height: 14px;
+      color: #94a3b8;
+      pointer-events: none;
+    }
+
+    .admin-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .admin-header h1 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 18px;
+      font-weight: 800;
+      color: #1e293b;
+    }
+    .admin-count {
+      font-size: 11px;
+      font-weight: 700;
+      color: #64748b;
+      background: #e2e8f0;
+      padding: 2px 9px;
+      border-radius: 999px;
+    }
+
+    /* ── Tab switch ── */
+    .admin-tabs {
+      display: flex;
+      gap: 4px;
+      background: #e2e8f0;
+      border-radius: 10px;
+      padding: 3px;
+      width: fit-content;
+    }
+    .admin-tab {
+      padding: 7px 18px;
+      border: none;
+      border-radius: 8px;
+      background: transparent;
+      color: #64748b;
+      font-family: 'Be Vietnam Pro', sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .admin-tab.active {
+      background: #fff;
+      color: #1e293b;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+
+    /* ── Table / Panel ── */
+    .admin-panel {
+      flex: 1;
+      min-height: 0;
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04);
+      overflow: auto;
+    }
+
+    /* ── Dashboard ── */
+    .dashboard-section { display: none; }
+    .dashboard-section.visible { display: flex; flex-direction: column; gap: 14px; }
+
+    .dash-filter-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .btn-dash-filter {
+      padding: 6px 14px;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      background: #fff;
+      color: #64748b;
+      font-family: 'Be Vietnam Pro', sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-dash-filter:hover { border-color: #cbd5e1; background: #f8fafc; }
+    .btn-dash-filter.active {
+      background: linear-gradient(135deg, #f97316, #ea580c);
+      color: #fff;
+      border-color: transparent;
+      box-shadow: 0 2px 8px rgba(249,115,22,0.25);
+    }
+    .dash-date-range {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .dash-date-range input[type="date"] {
+      padding: 5px 10px;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      background: #fff;
+      font-family: 'Be Vietnam Pro', sans-serif;
+      font-size: 11px;
+      color: #1e293b;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .dash-date-range input[type="date"]:focus {
+      border-color: #f97316;
+      box-shadow: 0 0 0 3px rgba(249,115,22,0.12);
+    }
+
+    .dash-table-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 18px 10px;
+    }
+    .dash-table-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      color: #1e293b;
+    }
+    .dash-search-box {
+      position: relative;
+    }
+    .dash-search-box input {
+      width: 180px;
+      padding: 5px 10px 5px 30px;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      background: #fff;
+      font-family: 'Be Vietnam Pro', sans-serif;
+      font-size: 11px;
+      color: #1e293b;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .dash-search-box input:focus {
+      border-color: #f97316;
+      box-shadow: 0 0 0 3px rgba(249,115,22,0.12);
+    }
+    .dash-search-box input::placeholder { color: #94a3b8; }
+    .dash-search-box svg {
+      position: absolute;
+      left: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 13px; height: 13px;
+      color: #94a3b8;
+      pointer-events: none;
+    }
+
+    .dash-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+    .dash-card {
+      background: #fff;
+      border-radius: 14px;
+      padding: 18px 20px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.04);
+    }
+    .dash-card-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 8px;
+    }
+    .dash-card-value {
+      font-family: 'Outfit', sans-serif;
+      font-size: 32px;
+      font-weight: 800;
+      color: #1e293b;
+      line-height: 1;
+    }
+    .dash-card-sub {
+      font-size: 11px;
+      font-weight: 600;
+      color: #64748b;
+      margin-top: 4px;
+    }
+    .dash-card-bar {
+      margin-top: 10px;
+      height: 6px;
+      border-radius: 3px;
+      background: #f1f5f9;
+      overflow: hidden;
+    }
+    .dash-card-bar-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.4s ease;
+    }
+
+    .dash-table-wrap {
+      background: #fff;
+      border-radius: 14px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.04);
+      overflow: auto;
+    }
+    .dash-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+    .dash-table th {
+      background: #f8fafc;
+      color: #64748b;
+      font-weight: 700;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      padding: 8px 12px;
+      text-align: left;
+      border-bottom: 1px solid #e2e8f0;
+      white-space: nowrap;
+    }
+    .dash-table td {
+      padding: 8px 12px;
+      border-bottom: 1px solid #f1f5f9;
+      vertical-align: middle;
+    }
+    .dash-table tr:hover td { background: #f8fafc; }
+    .dash-table th:last-child, .dash-table td:last-child { text-align: right; }
+
+    .pct-bar {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 100px;
+    }
+    .pct-bar-track {
+      flex: 1;
+      height: 6px;
+      border-radius: 3px;
+      background: #f1f5f9;
+      overflow: hidden;
+    }
+    .pct-bar-fill {
+      height: 100%;
+      border-radius: 3px;
+    }
+    .pct-bar-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: #475569;
+      min-width: 36px;
+      text-align: right;
+    }
+
+    .admin-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+    .admin-table thead {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+    .admin-table th {
+      background: #f8fafc;
+      color: #64748b;
+      font-weight: 700;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      padding: 10px 14px;
+      text-align: left;
+      border-bottom: 1px solid #e2e8f0;
+      white-space: nowrap;
+    }
+    .admin-table td {
+      padding: 10px 14px;
+      border-bottom: 1px solid #f1f5f9;
+      vertical-align: middle;
+    }
+    .admin-table tr:hover td { background: #f8fafc; }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .badge-finalized { color: #dc2626; background: #fef2f2; border: 1px solid #fca5a5; }
+    .badge-locked { color: #d97706; background: #fffbeb; border: 1px solid #fcd34d; }
+    .badge-open { color: #059669; background: #ecfdf5; border: 1px solid #6ee7b7; }
+    .badge-no-lock { color: #94a3b8; background: #f8fafc; border: 1px solid #e2e8f0; }
+
+    .btn-unlock {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 5px 12px;
+      border: none;
+      border-radius: 7px;
+      background: linear-gradient(135deg, #f97316, #ea580c);
+      color: #fff;
+      font-family: 'Be Vietnam Pro', sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: box-shadow 0.15s, transform 0.1s;
+      box-shadow: 0 2px 8px rgba(249,115,22,0.25);
+    }
+    .btn-unlock:hover { box-shadow: 0 4px 14px rgba(249,115,22,0.4); transform: translateY(-1px); }
+    .btn-unlock:active { transform: translateY(0); }
+    .btn-unlock svg { width: 12px; height: 12px; }
+
+    .btn-unlock[disabled] {
+      background: #94a3b8;
+      cursor: default;
+      box-shadow: none;
+      transform: none;
+    }
+
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 60px 20px;
+      color: #94a3b8;
+      gap: 10px;
+    }
+    .empty-state svg { width: 40px; height: 40px; opacity: 0.4; }
+    .empty-state span { font-size: 13px; font-weight: 600; }
+
+    /* Toast */
+    .admin-toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      padding: 10px 22px;
+      border-radius: 10px;
+      background: #1e293b;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+      opacity: 0;
+      transition: opacity 0.2s, transform 0.2s;
+      z-index: 999;
+      pointer-events: none;
+    }
+    .admin-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .admin-toast.ok { background: #059669; }
+    .admin-toast.err { background: #dc2626; }
+  </style>
+</head>
+
+<body>
+
+  <header class="admin-topbar">
+    <div class="admin-brand-orb" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+      </svg>
+    </div>
+    <div>
+      <div class="admin-brand-title">QC Admin</div>
+      <div class="admin-brand-sub">Quản lý khóa call</div>
+    </div>
+    <a class="admin-back" href="index.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>
+      </svg>
+      Quay về QC Tool
+    </a>
+  </header>
+
+  <div class="admin-layout">
+    <div class="admin-toolbar">
+      <button class="btn-pick" id="btnPickSpin">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+        </svg>
+        Chọn file SPIN
+      </button>
+      <span class="file-label" id="spinLabel">Chưa chọn file</span>
+      <span class="file-label" id="dirLabel">qc_locks.json</span>
+
+      <button class="btn-refresh" id="btnRefresh">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
+          <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+        </svg>
+        Làm mới
+      </button>
+    </div>
+
+    <div class="admin-search-row">
+      <div class="admin-tabs">
+        <button class="admin-tab active" data-tab="table">Danh sách</button>
+        <button class="admin-tab" data-tab="dashboard">Dashboard</button>
+      </div>
+      <div class="search-box" id="searchBoxWrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input type="text" id="searchInput" placeholder="Tìm theo tên, team, record ID, QC..." />
+      </div>
+      <div class="admin-header">
+        <h1 id="viewTitle">Danh sách call</h1>
+        <span class="admin-count" id="adminCount">0</span>
+      </div>
+    </div>
+
+    <!-- Table view -->
+    <div class="admin-panel" id="adminPanel">
+      <div class="empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+        </svg>
+        <span>Chọn thư mục và file SPIN để bắt đầu</span>
+      </div>
+    </div>
+
+    <!-- Dashboard view -->
+    <div class="dashboard-section" id="dashboardSection">
+      <div class="dash-filter-row" id="dashFilterRow">
+        <button class="btn-dash-filter active" data-filter="all">Tất cả</button>
+        <button class="btn-dash-filter" data-filter="today">Hôm nay</button>
+        <button class="btn-dash-filter" data-filter="range">Khoảng ngày</button>
+        <div class="dash-date-range" id="dashDateRange" style="display:none">
+          <input type="date" id="dashDateFrom" />
+          <span style="color:#94a3b8;font-size:11px">đến</span>
+          <input type="date" id="dashDateTo" />
+        </div>
+      </div>
+      <div class="dash-cards" id="dashCards"></div>
+      <div class="dash-table-wrap">
+        <div class="dash-table-header">
+          <div class="dash-table-title">Chi tiết theo QC</div>
+          <div class="dash-search-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="dashQCSearch" placeholder="Tìm QC..." />
+          </div>
+        </div>
+        <div id="dashQCTable"></div>
+      </div>
+      <div class="dash-table-wrap">
+        <div class="dash-table-header">
+          <div class="dash-table-title">Chi tiết theo CS</div>
+          <div class="dash-search-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="dashCSSearch" placeholder="Tìm CS..." />
+          </div>
+        </div>
+        <div id="dashCSTable"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="admin-toast" id="adminToast"></div>
+
+  <script src="xlsx.full.min.js"></script>
+  <script>
+    // ── State ──
+    var dirHandle = null;
+    var spinFileHandle = null;
+    var locksData = {};
+    var spinRows = [];     // parsed rows from DATA sheet
+    var spinHeaders = [];
+    var csListRows = [];   // rows from CS-LIST sheet
+    var planRows = [];     // rows from PLAN sheet
+    var searchQuery = '';
+    var activeTab = 'table';
+
+    // ── IndexedDB helpers ──
+    function idbOpen() {
+      return new Promise(function (resolve, reject) {
+        var req = indexedDB.open('admin_idb', 1);
+        req.onupgradeneeded = function (e) {
+          var db = e.target.result;
+          if (!db.objectStoreNames.contains('handles')) db.createObjectStore('handles');
+        };
+        req.onsuccess = function () { resolve(req.result); };
+        req.onerror = function () { reject(req.error); };
+      });
+    }
+    function idbSave(key, val) {
+      return idbOpen().then(function (db) {
+        var tx = db.transaction('handles', 'readwrite');
+        tx.objectStore('handles').put(val, key);
+        return new Promise(function (r) { tx.oncomplete = r; });
+      });
+    }
+    function idbGet(key) {
+      return idbOpen().then(function (db) {
+        return new Promise(function (resolve) {
+          var tx = db.transaction('handles', 'readonly');
+          var req = tx.objectStore('handles').get(key);
+          req.onsuccess = function () { resolve(req.result || null); };
+          req.onerror = function () { resolve(null); };
+        });
+      });
+    }
+
+    // ── Helpers ──
+    function showToast(msg, type) {
+      var t = document.getElementById('adminToast');
+      t.textContent = msg;
+      t.className = 'admin-toast show ' + (type || '');
+      clearTimeout(t._timer);
+      t._timer = setTimeout(function () { t.className = 'admin-toast'; }, 2500);
+    }
+
+    function escapeHtml(s) {
+      var d = document.createElement('div');
+      d.textContent = s || '';
+      return d.innerHTML;
+    }
+
+    function loadScores() {
+      try {
+        var raw = localStorage.getItem('qc.scores');
+        return raw ? JSON.parse(raw) : {};
+      } catch (e) { return {}; }
+    }
+
+    // ── File System Access ──
+    function requestPermission(handle) {
+      return handle.queryPermission({ mode: 'readwrite' }).then(function (perm) {
+        if (perm === 'granted') return true;
+        return handle.requestPermission({ mode: 'readwrite' }).then(function (p) { return p === 'granted'; });
+      });
+    }
+
+    function readLocksFile() {
+      if (!dirHandle) return Promise.resolve(null);
+      return requestPermission(dirHandle).then(function (ok) {
+        if (!ok) return null;
+        return dirHandle.getFileHandle('qc_locks.json', { create: false })
+          .then(function (fh) { return fh.getFile(); })
+          .then(function (f) { return f.text(); })
+          .then(function (text) { return JSON.parse(text); })
+          .catch(function () { return null; });
+      });
+    }
+
+    function writeLocksFile(data) {
+      if (!dirHandle) return Promise.resolve(false);
+      return requestPermission(dirHandle).then(function (ok) {
+        if (!ok) { showToast('Chưa cấp quyền ghi', 'err'); return false; }
+        return dirHandle.getFileHandle('qc_locks.json', { create: true })
+          .then(function (fh) { return fh.createWritable(); })
+          .then(function (w) {
+            return w.write(JSON.stringify(data, null, 2)).then(function () { return w.close(); });
+          })
+          .then(function () { return true; })
+          .catch(function (e) { showToast('Lỗi ghi file: ' + e.message, 'err'); return false; });
+      });
+    }
+
+    // ── Parse SPIN xlsx (3 sheets) ──
+    function parseSheetRows(wb, sheetName) {
+      if (wb.SheetNames.indexOf(sheetName) < 0) return [];
+      var ws = wb.Sheets[sheetName];
+      var rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+      if (rows.length < 2) return [];
+      var headers = rows[0].map(function (h) { return String(h).trim(); });
+      return rows.slice(1).map(function (row) {
+        var obj = {};
+        headers.forEach(function (h, i) { obj[h] = (row[i] !== undefined) ? row[i] : ''; });
+        return obj;
+      });
+    }
+
+    // PLAN sheet có header trống ở cột A → parse riêng dạng array
+    function parsePlanRaw(wb) {
+      if (wb.SheetNames.indexOf('PLAN') < 0) return [];
+      var ws = wb.Sheets['PLAN'];
+      return XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+    }
+
+    function parseSpinFile(file) {
+      return new Promise(function (resolve, reject) {
+        var reader = new FileReader();
+        reader.onload = function (e) {
+          try {
+            var data = new Uint8Array(e.target.result);
+            var wb = XLSX.read(data, { type: 'array', cellDates: false, cellNF: false, sheetStubs: false, dense: true });
+
+            // DATA sheet
+            var dataRows = parseSheetRows(wb, 'DATA');
+            var dataHeaders = [];
+            if (wb.SheetNames.indexOf('DATA') >= 0) {
+              var ws = wb.Sheets['DATA'];
+              var raw = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+              if (raw.length) dataHeaders = raw[0].map(function (h) { return String(h).trim(); });
+            }
+            var filtered = dataRows.filter(function (r) { return r['RECORDED_ID'] && String(r['RECORDED_ID']).trim(); });
+
+            // CS-LIST sheet
+            var csRows = parseSheetRows(wb, 'CS-LIST');
+
+            // PLAN sheet (raw array, không parse object vì header cột A trống)
+            var planData = parsePlanRaw(wb);
+
+            resolve({ headers: dataHeaders, rows: filtered, csListRows: csRows, planRows: planData });
+          } catch (err) { reject(err); }
+        };
+        reader.onerror = function () { reject(new Error('Không đọc được file')); };
+        reader.readAsArrayBuffer(file);
+      });
+    }
+
+    // ── Build merged rows ──
+    function buildMergedRows() {
+      var scores = loadScores();
+      var merged = [];
+
+      // Map từ spinRows
+      var spinMap = {};
+      spinRows.forEach(function (r) {
+        var recId = String(r['RECORDED_ID']).trim();
+        if (recId) spinMap[recId] = r;
+      });
+
+      // Tập hợp tất cả recId từ cả 3 nguồn
+      var allIds = {};
+      Object.keys(locksData).forEach(function (id) { allIds[id] = true; });
+      Object.keys(scores).forEach(function (id) { allIds[id] = true; });
+      Object.keys(spinMap).forEach(function (id) { allIds[id] = true; });
+
+      Object.keys(allIds).forEach(function (recId) {
+        var spin = spinMap[recId] || {};
+        var lock = locksData[recId] || null;
+        var sc = scores[recId] || {};
+
+        var qcName = '';
+        var lockedAt = '';
+        var finalized = false;
+        var finalizedAt = '';
+
+        if (lock) {
+          qcName = lock.qc || '';
+          lockedAt = lock.locked_at || '';
+          finalized = !!lock.finalized;
+          finalizedAt = lock.finalized_at || '';
+        }
+
+        // Fallback từ scores nếu lock không có
+        if (!qcName && sc.qcName) qcName = sc.qcName;
+
+        // Status
+        var status;
+        if (finalized) status = 'finalized';
+        else if (lock && lock.adminUnlocked) status = 'admin-unlocked';
+        else if (lock) status = 'locked';
+        else if (sc.status === 'completed') status = 'completed';
+        else status = 'open';
+
+        merged.push({
+          recId: recId,
+          user: spin['USER'] || '',
+          team: spin['Team'] || '',
+          date: spin['Date SP1'] || lockedAt || sc.scoringDate || '',
+          subCode: spin['SUB_CODE'] || '',
+          qcName: qcName,
+          status: status,
+          finalizedAt: finalizedAt
+        });
+      });
+
+      return merged;
+    }
+
+    // ── Filter ──
+    function filterRows(rows) {
+      if (!searchQuery) return rows;
+      var q = searchQuery.toLowerCase();
+      return rows.filter(function (r) {
+        return (r.recId && r.recId.toLowerCase().indexOf(q) >= 0) ||
+               (r.user && r.user.toLowerCase().indexOf(q) >= 0) ||
+               (r.team && r.team.toLowerCase().indexOf(q) >= 0) ||
+               (r.qcName && r.qcName.toLowerCase().indexOf(q) >= 0) ||
+               (r.subCode && r.subCode.toLowerCase().indexOf(q) >= 0) ||
+               (r.date && r.date.toLowerCase().indexOf(q) >= 0);
+      });
+    }
+
+    // ── Status badge ──
+    function statusBadge(status) {
+      if (status === 'finalized') return '<span class="badge badge-finalized">Đã khóa</span>';
+      if (status === 'admin-unlocked') return '<span class="badge" style="color:#ea580c;background:#fff7ed;border:1px solid #fdba74">Mở khóa</span>';
+      if (status === 'locked') return '<span class="badge badge-locked">Đang chấm</span>';
+      if (status === 'completed') return '<span class="badge badge-open">Tạm lưu</span>';
+      return '<span class="badge badge-no-lock">Chưa nhận</span>';
+    }
+
+    // ── SVG icons ──
+    var UNLOCK_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>';
+    var CHECK_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+
+    // ── Render ──
+    function render() {
+      var allRows = buildMergedRows();
+      var rows = filterRows(allRows);
+      var panel = document.getElementById('adminPanel');
+      var countEl = document.getElementById('adminCount');
+      countEl.textContent = rows.length + ' / ' + allRows.length;
+
+      if (!rows.length) {
+        panel.innerHTML =
+          '<div class="empty-state">' +
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">' +
+          '<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>' +
+          '<span>' + (searchQuery ? 'Không tìm thấy kết quả' : 'Chưa có dữ liệu') + '</span>' +
+          '</div>';
+        return;
+      }
+
+      var html =
+        '<table class="admin-table">' +
+        '<thead><tr>' +
+        '<th>STT</th>' +
+        '<th>Tên</th>' +
+        '<th>Team</th>' +
+        '<th>Ngày</th>' +
+        '<th>Record ID</th>' +
+        '<th>QC</th>' +
+        '<th>Trạng thái</th>' +
+        '<th>Khóa lúc</th>' +
+        '<th style="text-align:center">Thao tác</th>' +
+        '</tr></thead><tbody>';
+
+      rows.forEach(function (r, idx) {
+        var shortId = r.recId.length > 24 ? r.recId.slice(0, 24) + '…' : r.recId;
+        var finalizedStr = r.finalizedAt ? r.finalizedAt.slice(0, 19).replace('T', ' ') : '';
+
+        var actionBtn;
+        if (r.status === 'finalized') {
+          actionBtn = '<button class="btn-unlock" data-unlock="' + escapeHtml(r.recId) + '">' + UNLOCK_SVG + ' Mở khóa</button>';
+        } else if (r.status === 'admin-unlocked') {
+          actionBtn = '<button class="btn-unlock" disabled style="background:linear-gradient(135deg,#ea580c,#f97316)">' + CHECK_SVG + ' Đã mở khóa</button>';
+        } else if (r.status === 'locked') {
+          actionBtn = '<button class="btn-unlock" disabled>' + CHECK_SVG + ' Đang chấm</button>';
+        } else {
+          actionBtn = '<span style="color:#94a3b8;font-size:10px">—</span>';
+        }
+
+        html += '<tr>' +
+          '<td style="color:#94a3b8;font-weight:600">' + (idx + 1) + '</td>' +
+          '<td style="font-weight:600;color:#1e293b">' + escapeHtml(r.user) + '</td>' +
+          '<td style="color:#475569">' + escapeHtml(r.team) + '</td>' +
+          '<td style="color:#64748b">' + escapeHtml(r.date) + '</td>' +
+          '<td><code style="font-size:10px;color:#475569">' + escapeHtml(shortId) + '</code></td>' +
+          '<td style="font-weight:600;color:#1e293b">' + escapeHtml(r.qcName) + '</td>' +
+          '<td>' + statusBadge(r.status) + '</td>' +
+          '<td style="color:#64748b;font-size:10px">' + escapeHtml(finalizedStr) + '</td>' +
+          '<td style="text-align:center">' + actionBtn + '</td>' +
+          '</tr>';
+      });
+
+      html += '</tbody></table>';
+      panel.innerHTML = html;
+
+      // Wire unlock buttons
+      panel.querySelectorAll('[data-unlock]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var recId = btn.dataset.unlock;
+          if (!locksData[recId] || !locksData[recId].finalized) return;
+
+          delete locksData[recId].finalized;
+          delete locksData[recId].finalized_at;
+          locksData[recId].adminUnlocked = true;
+
+          // Đổi sc.status thành 'admin-unlocked' trong localStorage
+          try {
+            var scoresRaw = localStorage.getItem('qc.scores');
+            if (scoresRaw) {
+              var scores = JSON.parse(scoresRaw);
+              if (scores[recId] && scores[recId].status === 'resolved') {
+                scores[recId].status = 'admin-unlocked';
+                localStorage.setItem('qc.scores', JSON.stringify(scores));
+              }
+            }
+          } catch (e) {}
+
+          writeLocksFile(locksData).then(function (ok) {
+            if (ok) {
+              // Gửi signal cho index page biết đã mở khóa
+              try {
+                localStorage.setItem('qc.adminUnlock', JSON.stringify({ recId: recId, ts: Date.now() }));
+                localStorage.removeItem('qc.adminUnlock');
+              } catch (e) {}
+              showToast('Đã mở khóa: ' + recId.slice(0, 24) + '… — QC có thể sửa lại', 'ok');
+              render();
+            }
+          });
+        });
+      });
+    }
+
+    // ── Pick SPIN xlsx (also sets dirHandle for qc_locks.json) ──
+    document.getElementById('btnPickSpin').addEventListener('click', function () {
+      if (!window.showOpenFilePicker) {
+        showToast('Trình duyệt không hỗ trợ File System Access API', 'err');
+        return;
+      }
+      window.showOpenFilePicker({
+        types: [{ description: 'Excel', accept: { 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'] } }],
+        multiple: false
+      }).then(function (handles) {
+        var fh = handles[0];
+        spinFileHandle = fh;
+        idbSave('spinFileHandle', fh);
+        var spinLabel = document.getElementById('spinLabel');
+        spinLabel.textContent = fh.name;
+        spinLabel.classList.add('active');
+
+        // Lấy thư mục chứa file SPIN làm nơi đọc/ghi qc_locks.json
+        var dirPromise;
+        if (fh.directoryHandle) {
+          dirPromise = Promise.resolve(fh.directoryHandle);
+        } else if (window.showDirectoryPicker) {
+          dirPromise = window.showDirectoryPicker({ mode: 'readwrite' });
+        } else {
+          dirPromise = Promise.resolve(null);
+        }
+        return dirPromise.then(function (dh) {
+          if (dh) {
+            dirHandle = dh;
+            idbSave('dirHandle', dh);
+            var dirLabel = document.getElementById('dirLabel');
+            dirLabel.textContent = dh.name;
+            dirLabel.classList.add('active');
+          }
+          return fh.getFile();
+        });
+      }).then(function (file) {
+        return parseSpinFile(file);
+      }).then(function (result) {
+        spinHeaders = result.headers;
+        spinRows = result.rows;
+        csListRows = result.csListRows;
+        planRows = result.planRows;
+        showToast('Đã đọc SPIN — DATA: ' + spinRows.length + ', CS-LIST: ' + csListRows.length + ', PLAN: ' + planRows.length, 'ok');
+        // Đọc locks từ thư mục
+        if (dirHandle) {
+          return readLocksFile().then(function (data) {
+            if (data) {
+              locksData = data;
+              showToast('Đã đọc qc_locks.json — ' + Object.keys(data).length + ' lock', 'ok');
+            }
+          }).catch(function () {});
+        }
+      }).then(function () {
+        render();
+        renderDashboard();
+      }).catch(function (e) {
+        if (e.name !== 'AbortError') showToast('Lỗi: ' + e.message, 'err');
+      });
+    });
+
+    // ── Refresh ──
+    document.getElementById('btnRefresh').addEventListener('click', function () {
+      var promises = [];
+      if (dirHandle) {
+        promises.push(readLocksFile().then(function (data) {
+          if (data) locksData = data;
+        }));
+      }
+      if (spinFileHandle) {
+        promises.push(
+          spinFileHandle.getFile().then(function (file) {
+            return parseSpinFile(file);
+          }).then(function (result) {
+            spinHeaders = result.headers;
+            spinRows = result.rows;
+            csListRows = result.csListRows;
+            planRows = result.planRows;
+          }).catch(function () {})
+        );
+      }
+      Promise.all(promises).then(function () {
+        showToast('Đã làm mới', 'ok');
+        render();
+        renderDashboard();
+      });
+    });
+
+    // ── Search ──
+    document.getElementById('searchInput').addEventListener('input', function (e) {
+      searchQuery = e.target.value.trim();
+      render();
+    });
+
+    // ── Auto-refresh khi QC page lưu lock ──
+    window.addEventListener('storage', function (e) {
+      if (e.key === 'qc.locksUpdated' && dirHandle) {
+        readLocksFile().then(function (data) {
+          if (data) {
+            locksData = data;
+            render();
+            showToast('Đã tự cập nhật từ QC', 'ok');
+          }
+        }).catch(function () {});
+      }
+    });
+
+    // ── Excel date serial → JS Date ──
+    function excelDateToJS(serial) {
+      var s = Number(serial);
+      if (!s || s < 1) return null;
+      var utc = new Date((s - 25569) * 86400 * 1000);
+      return new Date(utc.getUTCFullYear(), utc.getUTCMonth(), utc.getUTCDate());
+    }
+
+    function fmtDate(d) {
+      if (!d) return '';
+      var dd = d.getDate(); var mm = d.getMonth() + 1; var yyyy = d.getFullYear();
+      return (dd < 10 ? '0' : '') + dd + '/' + (mm < 10 ? '0' : '') + mm + '/' + yyyy;
+    }
+
+    function dateKey(d) {
+      if (!d) return '';
+      var dd = d.getDate(); var mm = d.getMonth() + 1; var yyyy = d.getFullYear();
+      return yyyy + '-' + (mm < 10 ? '0' : '') + mm + '-' + (dd < 10 ? '0' : '') + dd;
+    }
+
+    // ── Dashboard filter state ──
+    var dashFilter = { type: 'all', from: null, to: null };
+
+    // ── Build dashboard data ──
+    function buildDashboardData(filter) {
+      if (!filter) filter = dashFilter;
+      var now = new Date();
+      var today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      var todayStr = dateKey(today);
+
+      // Xác định khoảng ngày lọc
+      var filterFrom = null, filterTo = null;
+      if (filter.type === 'today') {
+        filterFrom = today;
+        filterTo = today;
+      } else if (filter.type === 'range' && filter.from && filter.to) {
+        filterFrom = filter.from;
+        filterTo = filter.to;
+      }
+      // 'all' → filterFrom/filterTo = null (không lọc)
+
+      // Parse PLAN (raw array: row0 = header dates, col A = QC name)
+      var planDates = []; // array of {serial, jsDate, key}
+      var qcPlans = {};   // qcName → { daily: {dateKey: callsTarget}, total: N }
+
+      if (planRows.length >= 2) {
+        var hdrRow = planRows[0]; // ["", 46143, 46144, ...]
+        // Date serials từ index 1 trở đi
+        for (var i = 1; i < hdrRow.length; i++) {
+          var serial = Number(hdrRow[i]);
+          if (!serial || serial < 1) continue;
+          var d = excelDateToJS(serial);
+          if (!d) continue;
+          planDates.push({ serial: serial, jsDate: d, key: dateKey(d), colIdx: i });
+        }
+
+        // QC rows từ index 1 trở đi
+        for (var r = 1; r < planRows.length; r++) {
+          var row = planRows[r];
+          var qcName = String(row[0] || '').trim(); // cột A = index 0
+          if (!qcName) continue;
+          qcPlans[qcName] = { daily: {}, total: 0 };
+          for (var c = 0; c < planDates.length; c++) {
+            var val = String(row[planDates[c].colIdx] || '').trim().toUpperCase();
+            var calls = 0;
+            if (val === 'S1') calls = 20;
+            else if (val === 'S1/2') calls = 10;
+            if (calls > 0) {
+              qcPlans[qcName].daily[planDates[c].key] = calls;
+              qcPlans[qcName].total += calls;
+            }
+          }
+        }
+      }
+
+      // Helper: parse date string to key
+      function parseDateKey(dStr) {
+        if (!dStr) return '';
+        dStr = String(dStr).trim();
+        if (dStr.indexOf('-') > 0 && dStr.length === 10) return dStr;
+        if (dStr.indexOf('/') > 0) {
+          var parts = dStr.split('/');
+          if (parts.length === 3) return parts[2] + '-' + parts[1] + '-' + parts[0];
+        }
+        return '';
+      }
+
+      // Count actual scored calls per QC per day from DATA (with date filter)
+      var qcActual = {};   // qcName → { daily: {dateKey: count}, total: N }
+      var qcUsers = {};    // qcName → Set of CS users scored
+
+      spinRows.forEach(function (r) {
+        var qc = String(r['QC SP'] || '').trim();
+        if (!qc) return;
+        var dk = parseDateKey(r['Date SP1']);
+
+        // Apply date filter for QC stats
+        if (filterFrom && dk) {
+          var rowDate = new Date(dk);
+          if (rowDate < filterFrom || rowDate > filterTo) return;
+        }
+
+        if (!qcActual[qc]) qcActual[qc] = { daily: {}, total: 0 };
+        qcActual[qc].total++;
+        if (dk) qcActual[qc].daily[dk] = (qcActual[qc].daily[dk] || 0) + 1;
+
+        var user = String(r['USER'] || '').trim();
+        if (user) {
+          if (!qcUsers[qc]) qcUsers[qc] = {};
+          qcUsers[qc][user] = true;
+        }
+      });
+
+      // CS-LIST analysis
+      var csMap = {}; // user → {fullName, team, qcIncharge, status}
+      csListRows.forEach(function (r) {
+        var user = String(r['User'] || '').trim();
+        if (!user) return;
+        csMap[user] = {
+          fullName: String(r['Full Name'] || '').trim(),
+          team: String(r['Team'] || '').trim(),
+          group: String(r['Group'] || '').trim(),
+          qcIncharge: String(r['QC incharge'] || '').trim(),
+          status: String(r['Status'] || '').trim()
+        };
+      });
+
+      // CS đã có call (Date SP1 có giá trị)
+      var receivedCallCS = {};
+      // CS hoàn thành chấm (Ngày chấm có giá trị)
+      var completedScoredCS = {};
+
+      spinRows.forEach(function (r) {
+        var user = String(r['USER'] || '').trim();
+        if (!user) return;
+
+        var dateSP1 = String(r['Date SP1'] || '').trim();
+        if (dateSP1) receivedCallCS[user] = true;
+
+        var ngayCham = String(r['Ngày chấm'] || '').trim();
+        if (ngayCham) completedScoredCS[user] = true;
+      });
+
+      // Apply date filter
+      if (filterFrom) {
+        var filteredReceived = {};
+        var filteredCompleted = {};
+        spinRows.forEach(function (r) {
+          var user = String(r['USER'] || '').trim();
+          if (!user) return;
+
+          var dk = parseDateKey(r['Date SP1']);
+          if (dk) {
+            var rowDate = new Date(dk);
+            if (rowDate >= filterFrom && rowDate <= filterTo) filteredReceived[user] = true;
+          }
+
+          var dk2 = parseDateKey(r['Ngày chấm']);
+          if (dk2) {
+            var rowDate2 = new Date(dk2);
+            if (rowDate2 >= filterFrom && rowDate2 <= filterTo) filteredCompleted[user] = true;
+          }
+        });
+        receivedCallCS = filteredReceived;
+        completedScoredCS = filteredCompleted;
+      }
+
+      var totalCS = Object.keys(csMap).length;
+      var receivedCS = 0;  // CS đã có call (Date SP1)
+      var completedCS = 0; // CS hoàn thành chấm (Ngày chấm)
+
+      Object.keys(csMap).forEach(function (u) {
+        if (receivedCallCS[u]) receivedCS++;
+        if (completedScoredCS[u]) completedCS++;
+      });
+
+      // QC-level table data
+      var qcTableRows = [];
+      var allQCs = {};
+      Object.keys(qcPlans).forEach(function (q) { allQCs[q] = true; });
+      Object.keys(qcActual).forEach(function (q) { allQCs[q] = true; });
+
+      Object.keys(allQCs).sort().forEach(function (qc) {
+        var plan = qcPlans[qc] || { daily: {}, total: 0 };
+        var actual = qcActual[qc] || { daily: {}, total: 0 };
+        var users = qcUsers[qc] || {};
+
+        // Period target = TỔNG PLAN (không lọc theo ngày)
+        // Actual = lọc theo ngày nếu có filter
+        var periodTarget = 0;
+        planDates.forEach(function (pd) {
+          periodTarget += plan.daily[pd.key] || 0;
+        });
+
+        var periodActual = 0;
+        if (filterFrom) {
+          planDates.forEach(function (pd) {
+            if (pd.jsDate >= filterFrom && pd.jsDate <= filterTo) {
+              periodActual += actual.daily[pd.key] || 0;
+            }
+          });
+        } else {
+          periodActual = actual.total;
+        }
+        var periodPct = periodTarget > 0 ? Math.round(periodActual / periodTarget * 100) : 0;
+
+        // Uptodate = tổng actual / tổng PLAN (không phụ thuộc ngày)
+        var uptodateTarget = periodTarget; // tổng PLAN
+        var uptodateActual = actual.total;  // tổng mọi call đã chấm
+        var uptodatePct = uptodateTarget > 0 ? Math.round(uptodateActual / uptodateTarget * 100) : 0;
+
+        qcTableRows.push({
+          qc: qc,
+          csCount: Object.keys(users).length,
+          totalScored: actual.total,
+          periodTarget: periodTarget,
+          periodActual: periodActual,
+          periodPct: periodPct,
+          uptodateTarget: uptodateTarget,
+          uptodateActual: uptodateActual,
+          uptodatePct: uptodatePct
+        });
+      });
+
+      // CS-level table data
+      var csTableRows = [];
+      Object.keys(csMap).sort().forEach(function (user) {
+        var info = csMap[user];
+        // Count how many times scored
+        var count = 0;
+        var lastQC = '';
+        var lastDate = '';
+        spinRows.forEach(function (r) {
+          if (String(r['USER'] || '').trim() === user) {
+            count++;
+            lastQC = String(r['QC SP'] || '').trim();
+            lastDate = String(r['Date SP1'] || '').trim();
+          }
+        });
+        csTableRows.push({
+          user: user,
+          fullName: info.fullName,
+          team: info.team,
+          group: info.group,
+          qcIncharge: info.qcIncharge,
+          status: info.status,
+          scoredCount: count,
+          lastQC: lastQC,
+          lastDate: lastDate,
+          isCompleted: !!completedScoredCS[user]
+        });
+      });
+
+      return {
+        totalCS: totalCS,
+        receivedCS: receivedCS,
+        completedCS: completedCS,
+        receivedPct: totalCS > 0 ? Math.round(receivedCS / totalCS * 100) : 0,
+        completedPct: totalCS > 0 ? Math.round(completedCS / totalCS * 100) : 0,
+        qcTableRows: qcTableRows,
+        csTableRows: csTableRows,
+        todayStr: todayStr
+      };
+    }
+
+    // ── Render dashboard ──
+    function pctColor(pct) {
+      if (pct >= 100) return '#059669';
+      if (pct >= 70) return '#2563eb';
+      if (pct >= 40) return '#d97706';
+      return '#dc2626';
+    }
+
+    function pctBarHtml(pct) {
+      var c = pctColor(pct);
+      var w = Math.min(pct, 100);
+      return '<div class="pct-bar">' +
+        '<div class="pct-bar-track"><div class="pct-bar-fill" style="width:' + w + '%;background:' + c + '"></div></div>' +
+        '<span class="pct-bar-label" style="color:' + c + '">' + pct + '%</span>' +
+        '</div>';
+    }
+
+    function renderDashboard() {
+      if (!csListRows.length && !spinRows.length) return;
+
+      var d = buildDashboardData();
+
+      // Label cho filter (chỉ áp dụng cho actual)
+      var filterLabel = '';
+      if (dashFilter.type === 'today') filterLabel = d.todayStr;
+      else if (dashFilter.type === 'range' && dashFilter.from && dashFilter.to) filterLabel = fmtDate(dashFilter.from) + ' – ' + fmtDate(dashFilter.to);
+      else filterLabel = 'Tất cả';
+
+      // Summary cards
+      var cardsHtml = '';
+
+      cardsHtml += '<div class="dash-card">' +
+        '<div class="dash-card-label">CS đã được nhận call</div>' +
+        '<div class="dash-card-value">' + d.receivedCS + '<span style="font-size:16px;color:#94a3b8">/' + d.totalCS + '</span></div>' +
+        '<div class="dash-card-sub">' + d.receivedPct + '% CS có Date SP1 trong DATA</div>' +
+        '<div class="dash-card-bar"><div class="dash-card-bar-fill" style="width:' + d.receivedPct + '%;background:' + pctColor(d.receivedPct) + '"></div></div>' +
+        '</div>';
+
+      cardsHtml += '<div class="dash-card">' +
+        '<div class="dash-card-label">CS hoàn thành chấm</div>' +
+        '<div class="dash-card-value">' + d.completedCS + '<span style="font-size:16px;color:#94a3b8">/' + d.totalCS + '</span></div>' +
+        '<div class="dash-card-sub">' + d.completedPct + '% CS có Ngày chấm trong DATA</div>' +
+        '<div class="dash-card-bar"><div class="dash-card-bar-fill" style="width:' + d.completedPct + '%;background:' + pctColor(d.completedPct) + '"></div></div>' +
+        '</div>';
+
+      // Aggregate period target
+      var totalPeriodTarget = 0, totalPeriodActual = 0;
+      var totalUptodateTarget = 0, totalUptodateActual = 0;
+      d.qcTableRows.forEach(function (q) {
+        totalPeriodTarget += q.periodTarget;
+        totalPeriodActual += q.periodActual;
+        totalUptodateTarget += q.uptodateTarget;
+        totalUptodateActual += q.uptodateActual;
+      });
+      var periodPct = totalPeriodTarget > 0 ? Math.round(totalPeriodActual / totalPeriodTarget * 100) : 0;
+      var uptodatePct = totalUptodateTarget > 0 ? Math.round(totalUptodateActual / totalUptodateTarget * 100) : 0;
+
+      cardsHtml += '<div class="dash-card">' +
+        '<div class="dash-card-label">Hit Target</div>' +
+        '<div class="dash-card-value">' + periodPct + '%</div>' +
+        '<div class="dash-card-sub">' + totalPeriodActual + ' chấm / ' + totalPeriodTarget + ' target PLAN — Actual: ' + filterLabel + '</div>' +
+        '<div class="dash-card-bar"><div class="dash-card-bar-fill" style="width:' + periodPct + '%;background:' + pctColor(periodPct) + '"></div></div>' +
+        '</div>';
+
+      document.getElementById('dashCards').innerHTML = cardsHtml;
+
+      // QC detail table
+      if (d.qcTableRows.length) {
+        var qHtml = '<table class="dash-table"><thead><tr>' +
+          '<th>QC</th>' +
+          '<th>CS đang chấm</th>' +
+          '<th>Tổng call đã chấm</th>' +
+          '<th>Target kỳ</th>' +
+          '<th>Hit Target</th>' +
+          '<th>Target Uptodate</th>' +
+          '<th>Hit Uptodate</th>' +
+          '</tr></thead><tbody>';
+        d.qcTableRows.forEach(function (q) {
+          qHtml += '<tr>' +
+            '<td style="font-weight:600;color:#1e293b">' + escapeHtml(q.qc) + '</td>' +
+            '<td style="text-align:center">' + q.csCount + '</td>' +
+            '<td style="text-align:center">' + q.totalScored + '</td>' +
+            '<td style="text-align:center">' + q.periodActual + ' / ' + q.periodTarget + '</td>' +
+            '<td>' + pctBarHtml(q.periodPct) + '</td>' +
+            '<td style="text-align:center">' + q.uptodateActual + ' / ' + q.uptodateTarget + '</td>' +
+            '<td>' + pctBarHtml(q.uptodatePct) + '</td>' +
+            '</tr>';
+        });
+        qHtml += '</tbody></table>';
+        document.getElementById('dashQCTable').innerHTML = qHtml;
+      } else {
+        document.getElementById('dashQCTable').innerHTML = '<div style="padding:20px;color:#94a3b8;text-align:center;font-size:12px">Chưa có dữ liệu PLAN</div>';
+      }
+
+      // CS detail table
+      if (d.csTableRows.length) {
+        var cHtml = '<table class="dash-table"><thead><tr>' +
+          '<th>STT</th>' +
+          '<th>CS</th>' +
+          '<th>Tên</th>' +
+          '<th>Team</th>' +
+          '<th>QC phụ trách</th>' +
+          '<th>Số lần chấm</th>' +
+          '<th>Trạng thái</th>' +
+          '</tr></thead><tbody>';
+        d.csTableRows.forEach(function (c, idx) {
+          var statusHtml = c.isCompleted
+            ? '<span class="badge badge-open">Đã chấm</span>'
+            : (c.scoredCount > 0
+              ? '<span class="badge badge-locked">Đang chấm</span>'
+              : '<span class="badge badge-no-lock">Chưa nhận</span>');
+          cHtml += '<tr>' +
+            '<td style="color:#94a3b8;font-weight:600">' + (idx + 1) + '</td>' +
+            '<td style="font-weight:600;color:#1e293b">' + escapeHtml(c.user) + '</td>' +
+            '<td style="color:#475569">' + escapeHtml(c.fullName) + '</td>' +
+            '<td style="color:#475569">' + escapeHtml(c.team) + '</td>' +
+            '<td style="font-weight:600;color:#1e293b">' + escapeHtml(c.qcIncharge) + '</td>' +
+            '<td style="text-align:center">' + c.scoredCount + '</td>' +
+            '<td>' + statusHtml + '</td>' +
+            '</tr>';
+        });
+        cHtml += '</tbody></table>';
+        document.getElementById('dashCSTable').innerHTML = cHtml;
+      } else {
+        document.getElementById('dashCSTable').innerHTML = '<div style="padding:20px;color:#94a3b8;text-align:center;font-size:12px">Chưa có dữ liệu CS-LIST</div>';
+      }
+    }
+
+    // ── Tab switching ──
+    document.querySelectorAll('.admin-tab').forEach(function (tab) {
+      tab.addEventListener('click', function () {
+        document.querySelectorAll('.admin-tab').forEach(function (t) { t.classList.remove('active'); });
+        tab.classList.add('active');
+        activeTab = tab.dataset.tab;
+
+        var panel = document.getElementById('adminPanel');
+        var dash = document.getElementById('dashboardSection');
+        var searchBox = document.getElementById('searchBoxWrap');
+        var title = document.getElementById('viewTitle');
+
+        if (activeTab === 'dashboard') {
+          panel.style.display = 'none';
+          dash.classList.add('visible');
+          searchBox.style.display = 'none';
+          title.textContent = 'Dashboard';
+          renderDashboard();
+        } else {
+          panel.style.display = '';
+          dash.classList.remove('visible');
+          searchBox.style.display = '';
+          title.textContent = 'Danh sách call';
+        }
+      });
+    });
+
+    // ── Dashboard date filter ──
+    document.querySelectorAll('.btn-dash-filter').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        document.querySelectorAll('.btn-dash-filter').forEach(function (b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        var f = btn.dataset.filter;
+        var rangeEl = document.getElementById('dashDateRange');
+
+        if (f === 'range') {
+          rangeEl.style.display = '';
+          // Lấy giá trị từ input nếu có
+          var fromVal = document.getElementById('dashDateFrom').value;
+          var toVal = document.getElementById('dashDateTo').value;
+          if (fromVal && toVal) {
+            dashFilter = { type: 'range', from: new Date(fromVal), to: new Date(toVal) };
+          } else {
+            return; // Chưa chọn ngày, chờ input
+          }
+        } else {
+          rangeEl.style.display = 'none';
+          dashFilter = { type: f, from: null, to: null };
+        }
+        renderDashboard();
+      });
+    });
+
+    document.getElementById('dashDateFrom').addEventListener('change', function () {
+      var fromVal = document.getElementById('dashDateFrom').value;
+      var toVal = document.getElementById('dashDateTo').value;
+      if (fromVal && toVal) {
+        dashFilter = { type: 'range', from: new Date(fromVal), to: new Date(toVal) };
+        renderDashboard();
+      }
+    });
+    document.getElementById('dashDateTo').addEventListener('change', function () {
+      var fromVal = document.getElementById('dashDateFrom').value;
+      var toVal = document.getElementById('dashDateTo').value;
+      if (fromVal && toVal) {
+        dashFilter = { type: 'range', from: new Date(fromVal), to: new Date(toVal) };
+        renderDashboard();
+      }
+    });
+
+    // ── Dashboard search for QC and CS tables ──
+    document.getElementById('dashQCSearch').addEventListener('input', function (e) {
+      var q = e.target.value.trim().toLowerCase();
+      var rows = document.querySelectorAll('#dashQCTable .dash-table tbody tr');
+      rows.forEach(function (tr) {
+        var text = tr.textContent.toLowerCase();
+        tr.style.display = (q && text.indexOf(q) < 0) ? 'none' : '';
+      });
+    });
+
+    document.getElementById('dashCSSearch').addEventListener('input', function (e) {
+      var q = e.target.value.trim().toLowerCase();
+      var rows = document.querySelectorAll('#dashCSTable .dash-table tbody tr');
+      rows.forEach(function (tr) {
+        var text = tr.textContent.toLowerCase();
+        tr.style.display = (q && text.indexOf(q) < 0) ? 'none' : '';
+      });
+    });
+
+    // ── Init: restore handles from IndexedDB ──
+    (function () {
+      // Restore spinFileHandle + dirHandle
+      idbGet('spinFileHandle').then(function (h) {
+        if (!h) return;
+        spinFileHandle = h;
+        var spinLabel = document.getElementById('spinLabel');
+        spinLabel.textContent = h.name;
+        spinLabel.classList.add('active');
+
+        // Thử restore dirHandle từ IndexedDB
+        return idbGet('dirHandle').then(function (dh) {
+          if (dh) {
+            dirHandle = dh;
+            var dirLabel = document.getElementById('dirLabel');
+            dirLabel.textContent = dh.name;
+            dirLabel.classList.add('active');
+          }
+          return h.getFile();
+        });
+      }).then(function (file) {
+        if (file) return parseSpinFile(file);
+      }).then(function (result) {
+        if (result) {
+          spinHeaders = result.headers;
+          spinRows = result.rows;
+          csListRows = result.csListRows;
+          planRows = result.planRows;
+          if (dirHandle) {
+            return readLocksFile().then(function (data) {
+              if (data) locksData = data;
+            }).catch(function () {});
+          }
+        }
+      }).then(function () {
+        render();
+        renderDashboard();
+      }).catch(function () {});
+    })();
+  </script>
+</body>
+
+</html>
