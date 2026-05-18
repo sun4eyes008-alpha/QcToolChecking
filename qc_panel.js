@@ -1244,17 +1244,66 @@ function _getFilteredRows() {
   var filterDataDate = (document.getElementById('qcFilterDataDate') || {}).value || '';
   var myName = (qcState.qcName || '').trim();
   var rows = qcState.spinData || [];
-  // Hiện: open (chưa ai lấy) + call của mình đã lấy
-  rows = rows.filter(function (r) {
-    var recId = String(r['RECORDED_ID'] || '').trim();
-    var lock = qcState.locks[recId] || (r['QC SP'] ? { qc: r['QC SP'] } : null);
-    if (!lock) return true; // open
-    if (myName && lock.qc === myName) return true; // của mình
-    return false; // ẩn call của người khác
-  });
-  if (filterUser) rows = rows.filter(function (r) { return String(r['USER'] || '').toLowerCase().includes(filterUser.toLowerCase()); });
-  if (filterTeam) rows = rows.filter(function (r) { return String(r['Team'] || '').toLowerCase().includes(filterTeam.toLowerCase()); });
-  if (filterDataDate) rows = rows.filter(function (r) { return _getRowDataDate(r) === filterDataDate; });
+
+  if (window.IS_KETQUA_QC) {
+    // Replicate getStatus logic inline since getStatus is defined inside renderImportTable
+    rows = rows.filter(function (r) {
+      var recId = String(r['RECORDED_ID'] || '').trim();
+      var lock = qcState.locks[recId] || (r['QC SP'] ? { qc: r['QC SP'] } : null);
+      var sc = qcState.scores[recId];
+      var status = 'open';
+      if (lock) {
+        if (lock.finalized) status = 'resolved';
+        else if (sc && sc.status) status = sc.status;
+        else status = 'in-progress';
+      }
+      return status === 'resolved';
+    });
+  } else {
+    // Hiện: open (chưa ai lấy) + call của mình đã lấy
+    rows = rows.filter(function (r) {
+      var recId = String(r['RECORDED_ID'] || '').trim();
+      var lock = qcState.locks[recId] || (r['QC SP'] ? { qc: r['QC SP'] } : null);
+      if (!lock) return true; // open
+      if (myName && lock.qc === myName) return true; // của mình
+      return false; // ẩn call của người khác
+    });
+  }
+  if (filterUser) {
+    if (window.IS_KETQUA_QC) {
+      rows = rows.filter(function (r) { return String(r['USER'] || '').trim() === filterUser; });
+    } else {
+      rows = rows.filter(function (r) { return String(r['USER'] || '').toLowerCase().includes(filterUser.toLowerCase()); });
+    }
+  }
+  if (filterTeam) {
+    if (window.IS_KETQUA_QC) {
+      rows = rows.filter(function (r) { return String(r['Team'] || '').trim() === filterTeam; });
+    } else {
+      rows = rows.filter(function (r) { return String(r['Team'] || '').toLowerCase().includes(filterTeam.toLowerCase()); });
+    }
+  }
+  if (filterDataDate) {
+    if (window.IS_KETQUA_QC) {
+      rows = rows.filter(function (r) {
+        var recId = String(r['RECORDED_ID'] || '').trim();
+        var sc = qcState.scores[recId] || {};
+        var d = sc.scoringDate;
+        if (!d) {
+          var rDate = r['Ngày chấm'] || r['Date SP1'] || '';
+          if (rDate && rDate.indexOf('/') >= 0) {
+            var parts = rDate.split('/');
+            if (parts.length === 3) d = parts[2] + '-' + parts[1] + '-' + parts[0];
+          } else {
+            d = rDate;
+          }
+        }
+        return d === filterDataDate;
+      });
+    } else {
+      rows = rows.filter(function (r) { return _getRowDataDate(r) === filterDataDate; });
+    }
+  }
   return rows;
 }
 
@@ -2515,6 +2564,50 @@ function renderImportTable() {
   var rows = _getFilteredRows();
   _pruneSelectedRecIds();
 
+  if (window.IS_KETQUA_QC) {
+    var userSelect = document.getElementById('qcFilterUser');
+    if (userSelect && userSelect.tagName === 'SELECT') {
+      var currentVal = userSelect.value;
+      var allResolved = (qcState.spinData || []).filter(function(r) {
+        var recId = String(r['RECORDED_ID'] || '').trim();
+        var lock = qcState.locks[recId] || (r['QC SP'] ? { qc: r['QC SP'] } : null);
+        var sc = qcState.scores[recId];
+        var status = 'open';
+        if (lock) {
+          if (lock.finalized) status = 'resolved';
+          else if (sc && sc.status) status = sc.status;
+          else status = 'in-progress';
+        }
+        return status === 'resolved';
+      });
+      var users = {};
+      var teams = {};
+      allResolved.forEach(function(r) {
+        var u = String(r['USER'] || '').trim();
+        if (u) users[u] = true;
+        var t = String(r['Team'] || '').trim();
+        if (t) teams[t] = true;
+      });
+      var userList = Object.keys(users).sort();
+      var userHtml = '<option value="">Tất cả User</option>';
+      userList.forEach(function(u) {
+        userHtml += '<option value="' + u.replace(/"/g, '&quot;') + '"' + (u === currentVal ? ' selected' : '') + '>' + u + '</option>';
+      });
+      userSelect.innerHTML = userHtml;
+    }
+    
+    var teamSelect = document.getElementById('qcFilterTeam');
+    if (teamSelect && teamSelect.tagName === 'SELECT') {
+      var currentTeamVal = teamSelect.value;
+      var teamList = Object.keys(teams || {}).sort();
+      var teamHtml = '<option value="">Tất cả Team</option>';
+      teamList.forEach(function(t) {
+        teamHtml += '<option value="' + t.replace(/"/g, '&quot;') + '"' + (t === currentTeamVal ? ' selected' : '') + '>' + t + '</option>';
+      });
+      teamSelect.innerHTML = teamHtml;
+    }
+  }
+
   if (!rows.length) {
     container.innerHTML = '<div class="qc-empty"><div class="qc-empty-icon">' + QC_ICONS.list + '</div>Không có dữ liệu</div>';
     _updateBulkSelectionUi();
@@ -2546,15 +2639,16 @@ function renderImportTable() {
   }
 
   var html = '<div class="qc-table-wrap"><table class="qc-table"><thead><tr>' +
-    '<th style="width:28px;text-align:center"><input type="checkbox" data-select-all title="Tick tất cả"></th>' +
+    (window.IS_KETQUA_QC ? '' : '<th style="width:28px;text-align:center"><input type="checkbox" data-select-all title="Tick tất cả"></th>') +
     '<th style="width:56px;text-align:center;white-space:nowrap">ACT</th>' +
     '<th style="width:36px;text-align:center">STT</th>' +
     '<th>Tên</th>' +
     '<th>Team</th>' +
     '<th style="width:80px">Ngày</th>' +
-    '<th style="width:72px;text-align:center">Status</th>' +
+    (window.IS_KETQUA_QC ? '' : '<th style="width:72px;text-align:center">Status</th>') +
     '<th style="font-size:9px;color:#829195">SUB_CODE</th>' +
     '<th style="font-size:9px;color:#829195">RECORDED_ID</th>' +
+    (window.IS_KETQUA_QC ? '<th>ACCOUNTNUMBER</th><th>CREATE_TIME</th><th style="width:50px">Tổng điểm</th><th>Note</th>' : '') +
     '</tr></thead><tbody>';
 
   rows.forEach(function (r, idx) {
@@ -2568,27 +2662,47 @@ function renderImportTable() {
 
     // ACT button: play cho open, edit cho call của mình
     var btn = '';
-    if (!lock) {
-      btn = '<button class="qc-btn sm primary" data-action="score" data-recid="' + recId + '" title="Nhận và chấm">' + QC_ICONS.play + '</button>';
-    } else if (isMine && !isLocked) {
-      btn = '<button class="qc-btn sm primary" data-action="score" data-recid="' + recId + '" title="Tiếp tục chấm">' + QC_ICONS.play + '</button>';
-    } else if (isMine && isLocked) {
-      btn = '<button class="qc-btn sm" data-action="view" data-recid="' + recId + '" title="Xem lại bài chấm" style="color:#7c3aed;border-color:#c4b5fd">' + QC_ICONS.note + '</button>';
+    if (window.IS_KETQUA_QC) {
+      btn = '<button class="qc-btn sm" data-action="view" data-recid="' + recId + '" title="Xem kết quả" style="color:#7c3aed;border-color:#c4b5fd">' + QC_ICONS.note + '</button>';
     } else {
-      btn = '<span style="font-size:9px;color:#829195">—</span>';
+      if (!lock) {
+        btn = '<button class="qc-btn sm primary" data-action="score" data-recid="' + recId + '" title="Nhận và chấm">' + QC_ICONS.play + '</button>';
+      } else if (isMine && !isLocked) {
+        btn = '<button class="qc-btn sm primary" data-action="score" data-recid="' + recId + '" title="Tiếp tục chấm">' + QC_ICONS.play + '</button>';
+      } else if (isMine && isLocked) {
+        btn = '<button class="qc-btn sm" data-action="view" data-recid="' + recId + '" title="Xem lại bài chấm" style="color:#7c3aed;border-color:#c4b5fd">' + QC_ICONS.note + '</button>';
+      } else {
+        btn = '<span style="font-size:9px;color:#829195">—</span>';
+      }
     }
 
     var rowClass = isMine ? 'claimed-by-me' : '';
     html += '<tr class="' + rowClass + '" data-row-select="1" data-row-recid="' + recId + '" title="Click cả hàng để tick chọn">' +
-      '<td style="text-align:center"><input type="checkbox" data-select-recid="' + recId + '"' + checked + '></td>' +
+      (window.IS_KETQUA_QC ? '' : '<td style="text-align:center"><input type="checkbox" data-select-recid="' + recId + '"' + checked + '></td>') +
       '<td style="text-align:center">' + btn + '</td>' +
       '<td style="text-align:center;font-size:11px;color:#64748b">' + (idx + 1) + '</td>' +
       '<td>' + (r['USER'] || '') + '</td>' +
       '<td>' + (r['Team'] || '') + '</td>' +
       '<td style="font-size:11px;color:#64748b">' + scoringDate + '</td>' +
-      '<td style="text-align:center">' + statusBadge(status) + '</td>' +
+      (window.IS_KETQUA_QC ? '' : '<td style="text-align:center">' + statusBadge(status) + '</td>') +
       '<td style="font-size:9px;color:#64748b;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (r['SUB_CODE'] || '') + '</td>' +
-      '<td style="font-size:9px;color:#64748b;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="' + recId + '">' + recId.slice(0, 16) + '…</td></tr>';
+      '<td style="font-size:9px;color:#64748b;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="' + recId + '">' + recId.slice(0, 16) + '…</td>';
+      
+    if (window.IS_KETQUA_QC) {
+      var sc = qcState.scores[recId] || {};
+      var rCalc = calcScore(recId);
+      var totalPts = rCalc.total || 0;
+      var note = sc.note || '';
+      var accNum = r['ACCOUNTNUMBER'] || '';
+      var createTime = r['CREATE_TIME'] || '';
+      var escNote = note.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      html += '<td>' + accNum + '</td>' +
+              '<td style="font-size:11px;color:#64748b">' + createTime + '</td>' +
+              '<td style="text-align:center;font-weight:600">' + totalPts + '</td>' +
+              '<td style="font-size:11px;color:#64748b;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;transition:all 0.2s" title="Click để xem toàn bộ" onclick="this.style.whiteSpace = this.style.whiteSpace === \'pre-wrap\' ? \'nowrap\' : \'pre-wrap\'; this.style.wordBreak = this.style.whiteSpace === \'pre-wrap\' ? \'break-word\' : \'normal\';">' + escNote + '</td>';
+    }
+    
+    html += '</tr>';
   });
   html += '</tbody></table></div>';
   container.innerHTML = html;
@@ -2675,6 +2789,7 @@ function renderScoringForm(record) {
   var scores = recId ? _normalizeScoreEntry(recId) : _createEmptyScore();
   var lock = recId ? qcState.locks[recId] : null;
   var isViewOnly = !!(lock && lock.finalized);
+  if (window.IS_KETQUA_QC) isViewOnly = true;
 
   var todayStr = new Date().toISOString().slice(0, 10);
   var savedDate = scores.scoringDate || todayStr;
@@ -2797,6 +2912,7 @@ function renderScoringForm(record) {
       else if (hasP1) ptsHint = ' <span class="pts-hint">P1·' + Math.round(item.pts * 0.5) + '</span>';
 
       var mkBtn = function (bval, cls, lbl) {
+        if (isViewOnly && val !== bval) return '';
         var ttip = '';
         if (item.tooltips && item.tooltips[bval]) {
           ttip = ' title="' + item.tooltips[bval].replace(/"/g, '&quot;') + '"';
@@ -3706,6 +3822,15 @@ function exportResults() {
 
 // ── Build HTML ──
 function buildQcPanelHtml() {
+  var isKetqua = window.IS_KETQUA_QC;
+  var nameInputHtml = isKetqua ? '' : '<div class="qc-field qc-field-grow qc-import-name">' +
+    '<label class="qc-label qc-import-label">Tên QC</label>' +
+    '<input id="qcNameInput" class="qc-input qc-compact-input" placeholder="vd: huong.pham.13"/>' +
+    '</div>';
+  var userFilterHtml = isKetqua ? '<select id="qcFilterUser" class="qc-input qc-compact-input" title="Lọc theo Tên"><option value="">Tất cả User</option></select>' : '<input id="qcFilterUser" class="qc-input qc-compact-input" placeholder="Lọc USER..."/>';
+  var teamFilterHtml = isKetqua ? '<select id="qcFilterTeam" class="qc-input qc-compact-input" title="Lọc theo Team"><option value="">Tất cả Team</option></select>' : '<input id="qcFilterTeam" class="qc-input qc-compact-input" placeholder="Team"/>';
+  var dateFilterHtml = isKetqua ? '<input id="qcFilterDataDate" type="date" class="qc-input qc-compact-input qc-date-filter-input" title="Lọc theo Ngày chấm" aria-label="Lọc theo ngày chấm" />' : '<input id="qcFilterDataDate" type="date" class="qc-input qc-compact-input qc-date-filter-input" title="Lọc theo cột Ngày lấy data" aria-label="Lọc theo ngày lấy data" disabled />';
+
   return '<div id="qcTab" class="qc-theme-shell" data-theme="forest">' +
     '<div id="qcLoadingBar" class="qc-loading-bar"></div>' +
 
@@ -3713,10 +3838,7 @@ function buildQcPanelHtml() {
     '<div class="qc-section active" id="qcImportSection">' +
     '<div class="qc-toolbar qc-toolbar-grid qc-import-toolbar">' +
     '<div class="qc-import-topline">' +
-    '<div class="qc-field qc-field-grow qc-import-name">' +
-    '<label class="qc-label qc-import-label">Tên QC</label>' +
-    '<input id="qcNameInput" class="qc-input qc-compact-input" placeholder="vd: huong.pham.13"/>' +
-    '</div>' +
+    nameInputHtml +
     '<button class="qc-btn secondary sm qc-compact-btn qc-spin-pick-btn" id="qcImportBtn">' + QC_ICONS.import + ' Chọn SPIN</button>' +
     '</div>' +
     '<div class="qc-import-inline-grid qc-import-meta-grid">' +
@@ -3724,20 +3846,20 @@ function buildQcPanelHtml() {
     '<input id="qcPhanLoaiInput" class="qc-input qc-compact-input" placeholder="Phân loại"/>' +
     '</div>' +
     '<div class="qc-import-bottomline">' +
-    '<input id="qcFilterUser" class="qc-input qc-compact-input" placeholder="Lọc USER..."/>' +
-    '<input id="qcFilterTeam" class="qc-input qc-compact-input" placeholder="Team"/>' +
-    '<input id="qcFilterDataDate" type="date" class="qc-input qc-compact-input qc-date-filter-input" title="Lọc theo cột Ngày lấy data" aria-label="Lọc theo ngày lấy data" disabled />' +
+    userFilterHtml +
+    teamFilterHtml +
+    dateFilterHtml +
     '<button class="qc-btn secondary sm qc-icon-btn qc-theme-btn" id="qcThemeBtn" title="Đổi theme" aria-label="Đổi theme">' + QC_ICONS.palette + '</button>' +
     '<button class="qc-btn secondary sm qc-icon-btn" id="qcRefreshBtn" title="Đọc lại file SPIN">' + QC_ICONS.refresh + '</button>' +
     '</div>' +
-    '<div class="qc-action-row qc-bulk-action-row" style="margin-top:0;display:grid;grid-template-columns:1fr 1fr 0.8fr 1.05fr;gap:4px">' +
+    (isKetqua ? '' : '<div class="qc-action-row qc-bulk-action-row" style="margin-top:0;display:grid;grid-template-columns:1fr 1fr 0.8fr 1.05fr;gap:4px">' +
     '<button class="qc-btn success sm qc-compact-btn" id="qcBulkClaimBtn" disabled style="font-size:11px">' + QC_ICONS.check + ' Nhận</button>' +
     '<button class="qc-btn danger sm qc-compact-btn" id="qcBulkUnclaimBtn" disabled style="font-size:11px">' + QC_ICONS.undo + ' Trả</button>' +
     '<button class="qc-btn secondary sm qc-compact-btn" id="qcBulkClearBtn" title="Bỏ tick" style="min-width:30px">' +
     '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
     '</button>' +
     '<span id="qcBulkCount" class="folder-status-label qc-bulk-count" style="display:flex;align-items:center;justify-content:center;font-size:11px">Tick: 0</span>' +
-    '</div>' +
+    '</div>') +
     '</div>' +
     '<div class="qc-scroll" id="qcImportTable">' +
     '<div class="qc-empty"><div class="qc-empty-icon">' + QC_ICONS.import + '</div>Import file SPIN.xlsx để bắt đầu</div>' +
